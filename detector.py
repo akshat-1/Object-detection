@@ -4,10 +4,12 @@ import cvzone
 import math
 
 class begin_capture():
-    def __init__ (self ,model = "yolov8n.pt" ,capture_index =0, stream = True):
+    def __init__ (self ,stop_btn, frame_placeholder , model = "yolov8n.pt" ,capture_index =0, stream = True):
         self.model = model
         self.capture_index = capture_index
         self.stream = stream
+        self.stop_btn = stop_btn
+        self.frame_placeholder = frame_placeholder
 
     def begin(self):
         cap = cv2.VideoCapture(0)
@@ -27,7 +29,7 @@ class begin_capture():
                     "teddy bear", "hair drier", "toothbrush"
                     ]
 
-        while True:
+        while cap.isOpened() and not self.stop_btn:
             success , img = cap.read()
             img = cv2.flip(img , 1)
             results = model(img , stream=self.stream)
@@ -44,7 +46,15 @@ class begin_capture():
                     conf = math.ceil((box.conf[0]*100))/100
                     cls = int(box.cls[0])
                     cvzone.putTextRect(img , f'{classNames[cls]} {conf}' , (max(0 , x1),max(35 ,y1)) )
-                    
 
+            frame = cv2.cvtColor(img , cv2.COLOR_BGR2RGB)   
+            self.frame_placeholder.image(img , channels="RGB")
+             
+            if ((cv2.waitKey(1) & 0xFF == ord('q'))or self.stop_btn):
+                break
+
+            
             cv2.imshow("Image" , img)
-            cv2.waitKey(1)
+
+        cap.release()
+        cv2.destroyAllWindows()
